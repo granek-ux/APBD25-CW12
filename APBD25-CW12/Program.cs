@@ -1,4 +1,4 @@
-// using APBD25_CW12.Data;
+using APBD25_CW12.Data;
 using APBD25_CW12.Services;
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.SwaggerUI;
@@ -11,13 +11,13 @@ builder.Services.AddControllers();
 
 // Konfiguracja kontekstu bazy danych
 // ConnectionString jest pobierany z appsettings.json, oczywiście należy go tam też ustawić
-// builder.Services.AddDbContext<DatabaseContext>(options => 
-    // options.UseSqlServer(builder.Configuration.GetConnectionString("LocalDB"))
-// );
+builder.Services.AddDbContext<ApbdContext>(options => 
+    options.UseSqlServer(builder.Configuration.GetConnectionString("LocalDB"))
+);
 
 // Wstrzykiwanie zależności
 // https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection
-builder.Services.AddScoped<IDbService, DbService>();
+builder.Services.AddScoped<ITripsService, TripsService>();
 
 builder.Services.AddSwaggerGen();
 
