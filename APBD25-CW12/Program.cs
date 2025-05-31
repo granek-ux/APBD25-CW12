@@ -18,6 +18,7 @@ builder.Services.AddDbContext<ApbdContext>(options =>
 // Wstrzykiwanie zależności
 // https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection
 builder.Services.AddScoped<ITripsService, TripsService>();
+builder.Services.AddScoped<IClientService, ClientService>();
 
 builder.Services.AddSwaggerGen();
 
