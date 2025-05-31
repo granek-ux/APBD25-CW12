@@ -17,7 +17,6 @@ public class RequestDto
     [Required]
     public int IdTrip { get; set; }
     [Required]
-    public string TripName { get; set; }
-    [Required]
-    public DateTime PaymentDate { get; set; }
+    public string TripName { get; set; } 
+    public DateTime? PaymentDate { get; set; }
 }
