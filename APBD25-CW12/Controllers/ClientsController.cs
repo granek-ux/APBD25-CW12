@@ -1,3 +1,4 @@
+using APBD25_CW11.Exceptions;
 using APBD25_CW12.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -17,9 +18,27 @@ namespace APBD25_CW12.Controllers
         }
         
         [HttpDelete("{id}")]
-        public async Task DeleteClientAsync(int id, CancellationToken cancellationToken)
+        public async Task<IActionResult> DeleteClientAsync(int id, CancellationToken cancellationToken)
         {
-            await _clientService.DeleteClientAsync(id, cancellationToken);
+            try
+            {
+                await _clientService.DeleteClientAsync(id, cancellationToken);
+
+            }
+            catch (NotFoundException e)
+            {
+                return NotFound(e.Message);
+            }
+            catch (BadRequestException e)
+            {
+                return BadRequest(e.Message);
+            }
+            catch (Exception e)
+            {
+                return Problem("Unexpected error occurred", statusCode: 500);
+            }
+
+            return Ok("Client deleted successfully");
         }
         
     }
