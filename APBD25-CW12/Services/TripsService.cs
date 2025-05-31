@@ -1,5 +1,7 @@
-﻿using APBD25_CW12.Data;
+﻿using APBD25_CW11.Exceptions;
+using APBD25_CW12.Data;
 using APBD25_CW12.DTO;
+using APBD25_CW12.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace APBD25_CW12.Services;
@@ -46,5 +48,71 @@ public class TripsService : ITripsService
             pageNum = page,
             pageSize = pageSize
         };
+    }
+
+    public async Task AddClientToTripAsync(int idTrip, RequestDto requestDto, CancellationToken cancellationToken)
+    {
+        
+        var client = await _context.Clients.Where(c => c.Pesel == requestDto.Pesel)
+            .FirstOrDefaultAsync(cancellationToken);
+            if (client != null)
+            {
+                throw new ConflictException($"Client with PESEL {requestDto.Pesel} was found.");
+            }
+            
+            
+            var trip = await _context.Trips.Where( t => t.IdTrip == idTrip)
+                .Include(t => t.ClientTrips)
+                .FirstOrDefaultAsync(cancellationToken);
+            
+            if (trip == null)
+            {
+                throw new NotFoundException($"Trip with ID {idTrip} not found.");
+            }
+            
+            if (trip.DateFrom < DateTime.Now)
+            {
+                throw new BadRequestException("Cannot add client to a trip that has already started.");
+            }
+            
+            var newClient = new Client
+            {
+                FirstName = requestDto.FirstName,
+                LastName = requestDto.LastName,
+                Email = requestDto.Email,
+                Telephone = requestDto.Telephone,
+                Pesel = requestDto.Pesel
+            };
+            
+            var isAlreadyOnTrip = await _context.ClientTrips
+                .Include(e => e.IdClientNavigation)
+                .AnyAsync(ct => ct.IdClientNavigation.Pesel == requestDto.Pesel && ct.IdTrip == idTrip, cancellationToken);
+            
+            if (isAlreadyOnTrip)
+            {
+                throw new ConflictException($"Client with PESEL {requestDto.Pesel} is already on this trip.");
+            }
+            
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                await _context.Clients.AddAsync(newClient, cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
+                
+                var clientTrip = new ClientTrip
+                {
+                    IdClient = newClient.IdClient,
+                    IdTrip = idTrip,
+                    RegisteredAt = DateTime.Now,
+                    PaymentDate = requestDto.PaymentDate
+                };
+                await _context.ClientTrips.AddAsync(clientTrip, cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+            }catch (Exception ex)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw new Exception("An error occurred while adding the client to the trip.");
+            }
     }
 }

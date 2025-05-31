@@ -1,3 +1,6 @@
+using APBD25_CW11.Exceptions;
+using APBD25_CW12.DTO;
+using APBD25_CW12.Models;
 using APBD25_CW12.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +36,33 @@ namespace APBD25_CW12.Controllers
             {
                 return Problem("Unexpected error occurred", statusCode: 500);
             }
+        }
+
+        [HttpPost("{idTrip}/clients")]
+        public async Task<IActionResult> AddClientToTrip(int idTrip ,[FromBody] RequestDto requestDto, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _tripsService.AddClientToTripAsync(idTrip, requestDto, cancellationToken);
+
+            }catch (NotFoundException e)
+            {
+                return NotFound(e.Message);
+            }
+            catch (BadRequestException e)
+            {
+                return BadRequest(e.Message);
+            }
+            catch (ConflictException e)
+            {
+                return Conflict(e.Message);
+            }
+            catch (Exception e)
+            {
+                return Problem("Unexpected error occurred", statusCode: 500);
+            }
+
+            return Created();
         }
         
     }
